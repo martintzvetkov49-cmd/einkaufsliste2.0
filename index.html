@@ -1,8 +1,3 @@
-
-
-
-
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -32,9 +27,12 @@
         }
     </style>
 </head>
-<script>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div id="app"></div>
+
+    <script>
         // ============================================
-        // FIREBASE KONFIGURATION - HIER ÄNDERN!
+        // FIREBASE KONFIGURATION
         // ============================================
         const firebaseConfig = {
             apiKey: "AIzaSyA-RmYmwYU7FbcQ0zpbkRUPzMYTghF73TQ",
@@ -49,19 +47,14 @@
 
         // Firebase initialisieren
         let database;
-
-        // Firebase initialisieren
-        let database;
         let itemsRef;
         let isConfigured = false;
 
         try {
-            if (firebaseConfig.apiKey !== "DEIN_API_KEY") {
-                firebase.initializeApp(firebaseConfig);
-                database = firebase.database();
-                itemsRef = database.ref('shoppingItems');
-                isConfigured = true;
-            }
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            itemsRef = database.ref('shoppingItems');
+            isConfigured = true;
         } catch (error) {
             console.error("Firebase Fehler:", error);
         }
@@ -161,18 +154,6 @@
 
             var app = document.getElementById('app');
             
-            // Warnung wenn Firebase nicht konfiguriert
-            var configWarning = '';
-            if (!isConfigured) {
-                configWarning = '<div class="max-w-2xl mx-auto mb-4">' +
-                    '<div class="bg-yellow-100 border-2 border-yellow-400 rounded-2xl p-6">' +
-                    '<h2 class="text-xl font-bold text-yellow-800 mb-2">⚠️ Firebase noch nicht konfiguriert!</h2>' +
-                    '<p class="text-yellow-700 mb-2">Bitte folge der Anleitung unten, um Firebase einzurichten.</p>' +
-                    '<p class="text-sm text-yellow-600">Die App funktioniert erst nach der Konfiguration.</p>' +
-                    '</div>' +
-                    '</div>';
-            }
-            
             var categoriesHtml = '';
             for (var i = 0; i < categories.length; i++) {
                 var selected = categories[i] === selectedCategory ? 'selected' : '';
@@ -230,27 +211,10 @@
             var statusDot = isConfigured ? 'bg-green-500' : 'bg-red-500';
             var statusText = isConfigured ? 'Online' : 'Offline';
             var buttonDisabled = !isConfigured ? 'opacity-50 cursor-not-allowed' : '';
-            var infoText = isConfigured ? '🔄 Wird in Echtzeit synchronisiert' : '⚙️ Bitte Firebase konfigurieren';
+            var infoText = isConfigured ? '🔄 Wird in Echtzeit synchronisiert' : '⚙️ Firebase Fehler - prüfe Console';
             var infoSubtext = isConfigured ? '<p class="text-xs text-gray-500 text-center mt-1">Änderungen werden sofort zwischen allen Geräten geteilt</p>' : '';
             
-            var anleitungHtml = '';
-            if (!isConfigured) {
-                anleitungHtml = '<div class="bg-white rounded-2xl shadow-lg p-6 mt-4">' +
-                    '<h2 class="text-2xl font-bold text-gray-800 mb-4">📋 Firebase Einrichtung</h2>' +
-                    '<ol class="space-y-3 text-sm text-gray-700">' +
-                    '<li class="flex gap-2"><span class="font-bold">1.</span><span>Gehe zu <a href="https://console.firebase.google.com" target="_blank" class="text-indigo-600 underline">Firebase Console</a></span></li>' +
-                    '<li class="flex gap-2"><span class="font-bold">2.</span><span>Erstelle ein neues Projekt (z.B. "einkaufsliste")</span></li>' +
-                    '<li class="flex gap-2"><span class="font-bold">3.</span><span>Klicke auf "Web-App hinzufügen" (&lt;/&gt; Symbol)</span></li>' +
-                    '<li class="flex gap-2"><span class="font-bold">4.</span><span>Kopiere die Firebase-Konfiguration</span></li>' +
-                    '<li class="flex gap-2"><span class="font-bold">5.</span><span>Gehe zu "Realtime Database" → "Datenbank erstellen" → "Im Testmodus starten"</span></li>' +
-                    '<li class="flex gap-2"><span class="font-bold">6.</span><span>Ersetze die Konfiguration oben im Code (Zeile 21-28)</span></li>' +
-                    '<li class="flex gap-2"><span class="font-bold">7.</span><span>Lade die Datei auf GitHub Pages hoch</span></li>' +
-                    '</ol>' +
-                    '</div>';
-            }
-            
-            app.innerHTML = configWarning +
-                '<div class="max-w-2xl mx-auto p-4">' +
+            app.innerHTML = '<div class="max-w-2xl mx-auto p-4">' +
                 '<div class="bg-white rounded-2xl shadow-lg p-6 mb-4 fade-in">' +
                 '<div class="flex items-center justify-between mb-2">' +
                 '<h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">' +
@@ -292,7 +256,6 @@
                 '<p class="text-sm text-gray-600 text-center">' + infoText + '</p>' +
                 infoSubtext +
                 '</div>' +
-                anleitungHtml +
                 '</div>';
 
             var input = document.getElementById('newItemInput');
@@ -325,11 +288,3 @@
     </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
