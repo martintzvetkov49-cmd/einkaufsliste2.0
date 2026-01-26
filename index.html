@@ -1,0 +1,334 @@
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemeinsame Einkaufsliste</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .animate-spin {
+            animation: spin 1s linear infinite;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div id="app"></div>
+
+    <script>
+const firebaseConfig = {
+    apiKey: "AIzaSyA-RmYmwYU7FbcQ0zpbkRUPzMYTghF73TQ",
+    authDomain: "einkaufsliste-ff784.firebaseapp.com",
+    databaseURL: "https://einkaufsliste-ff784-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "einkaufsliste-ff784",
+    storageBucket: "einkaufsliste-ff784.firebasestorage.app",
+    messagingSenderId: "616070619611",
+    appId: "1:616070619611:web:91fd3bc488294fc48747fe"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+        };
+        // ============================================
+
+        // Firebase initialisieren
+        let database;
+        let itemsRef;
+        let isConfigured = false;
+
+        try {
+            if (firebaseConfig.apiKey !== "DEIN_API_KEY") {
+                firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+                itemsRef = database.ref('shoppingItems');
+                isConfigured = true;
+            }
+        } catch (error) {
+            console.error("Firebase Fehler:", error);
+        }
+
+        const categories = ['Allgemein', 'Obst & Gemüse', 'Milchprodukte', 'Fleisch & Fisch', 'Backwaren', 'Getränke', 'Haushalt', 'Sonstiges'];
+        
+        let items = [];
+        let newItemName = '';
+        let selectedCategory = 'Allgemein';
+        let syncing = false;
+
+        function initializeFirebaseListener() {
+            if (!isConfigured) return;
+            
+            itemsRef.on('value', function(snapshot) {
+                var data = snapshot.val();
+                if (data) {
+                    items = Object.keys(data).map(function(key) {
+                        return data[key];
+                    });
+                } else {
+                    items = [];
+                }
+                render();
+            });
+        }
+
+        function addItem() {
+            if (!isConfigured) {
+                alert('Bitte Firebase konfigurieren! Siehe Anleitung unten.');
+                return;
+            }
+            
+            if (newItemName.trim()) {
+                var newItemObj = {
+                    id: Date.now(),
+                    name: newItemName.trim(),
+                    category: selectedCategory,
+                    checked: false,
+                    addedAt: new Date().toISOString()
+                };
+                
+                itemsRef.child(newItemObj.id.toString()).set(newItemObj);
+                newItemName = '';
+                render();
+            }
+        }
+
+        function toggleItem(id) {
+            if (!isConfigured) return;
+            
+            var item = items.find(function(i) { return i.id === id; });
+            if (item) {
+                itemsRef.child(id.toString()).update({
+                    checked: !item.checked
+                });
+            }
+        }
+
+        function deleteItem(id) {
+            if (!isConfigured) return;
+            itemsRef.child(id.toString()).remove();
+        }
+
+        function clearChecked() {
+            if (!isConfigured) return;
+            
+            var checkedItems = items.filter(function(item) { return item.checked; });
+            checkedItems.forEach(function(item) {
+                itemsRef.child(item.id.toString()).remove();
+            });
+        }
+
+        function groupItemsByCategory() {
+            var grouped = {};
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (!grouped[item.category]) {
+                    grouped[item.category] = [];
+                }
+                grouped[item.category].push(item);
+            }
+            return grouped;
+        }
+
+        function render() {
+            var uncheckedCount = 0;
+            var checkedCount = 0;
+            for (var i = 0; i < items.length; i++) {
+                if (items[i].checked) {
+                    checkedCount++;
+                } else {
+                    uncheckedCount++;
+                }
+            }
+            var groupedItems = groupItemsByCategory();
+
+            var app = document.getElementById('app');
+            
+            // Warnung wenn Firebase nicht konfiguriert
+            var configWarning = '';
+            if (!isConfigured) {
+                configWarning = '<div class="max-w-2xl mx-auto mb-4">' +
+                    '<div class="bg-yellow-100 border-2 border-yellow-400 rounded-2xl p-6">' +
+                    '<h2 class="text-xl font-bold text-yellow-800 mb-2">⚠️ Firebase noch nicht konfiguriert!</h2>' +
+                    '<p class="text-yellow-700 mb-2">Bitte folge der Anleitung unten, um Firebase einzurichten.</p>' +
+                    '<p class="text-sm text-yellow-600">Die App funktioniert erst nach der Konfiguration.</p>' +
+                    '</div>' +
+                    '</div>';
+            }
+            
+            var categoriesHtml = '';
+            for (var i = 0; i < categories.length; i++) {
+                var selected = categories[i] === selectedCategory ? 'selected' : '';
+                categoriesHtml += '<option value="' + categories[i] + '" ' + selected + '>' + categories[i] + '</option>';
+            }
+            
+            var itemsListHtml = '';
+            var categoryKeys = Object.keys(groupedItems);
+            
+            if (categoryKeys.length === 0) {
+                itemsListHtml = '<div class="bg-white rounded-2xl shadow-lg p-12 text-center fade-in">' +
+                    '<svg class="w-16 h-16 mx-auto text-gray-300 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                    '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>' +
+                    '</svg>' +
+                    '<p class="text-xl text-gray-400">Keine Artikel auf der Liste</p>' +
+                    '<p class="text-sm text-gray-400 mt-2">Füge deinen ersten Artikel hinzu!</p>' +
+                    '</div>';
+            } else {
+                for (var i = 0; i < categoryKeys.length; i++) {
+                    var cat = categoryKeys[i];
+                    var catItems = groupedItems[cat];
+                    itemsListHtml += '<div class="bg-white rounded-2xl shadow-lg p-4 fade-in">';
+                    itemsListHtml += '<h3 class="font-semibold text-lg text-gray-700 mb-3 px-2">' + cat + '</h3>';
+                    itemsListHtml += '<div class="space-y-2">';
+                    
+                    for (var j = 0; j < catItems.length; j++) {
+                        var item = catItems[j];
+                        var itemClass = item.checked ? 'bg-gray-50 opacity-60' : 'bg-indigo-50 hover:bg-indigo-100';
+                        var buttonClass = item.checked ? 'bg-green-500 border-green-500' : 'border-gray-300 hover:border-indigo-500';
+                        var textClass = item.checked ? 'line-through text-gray-400' : 'text-gray-800';
+                        var checkIcon = item.checked ? '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>' : '';
+                        
+                        itemsListHtml += '<div class="flex items-center gap-3 p-3 rounded-lg transition-all ' + itemClass + '">';
+                        itemsListHtml += '<button onclick="toggleItem(' + item.id + ')" class="flex-shrink-0 w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all ' + buttonClass + '">';
+                        itemsListHtml += checkIcon;
+                        itemsListHtml += '</button>';
+                        itemsListHtml += '<span class="flex-1 text-lg ' + textClass + '">' + item.name + '</span>';
+                        itemsListHtml += '<button onclick="deleteItem(' + item.id + ')" class="flex-shrink-0 text-red-500 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-colors">';
+                        itemsListHtml += '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>';
+                        itemsListHtml += '</button>';
+                        itemsListHtml += '</div>';
+                    }
+                    
+                    itemsListHtml += '</div></div>';
+                }
+                
+                if (checkedCount > 0) {
+                    itemsListHtml += '<button onclick="clearChecked()" class="w-full bg-red-500 text-white py-3 rounded-xl hover:bg-red-600 transition-colors font-medium flex items-center justify-center gap-2">';
+                    itemsListHtml += '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>';
+                    itemsListHtml += 'Erledigte Artikel löschen (' + checkedCount + ')';
+                    itemsListHtml += '</button>';
+                }
+            }
+            
+            var statusDot = isConfigured ? 'bg-green-500' : 'bg-red-500';
+            var statusText = isConfigured ? 'Online' : 'Offline';
+            var buttonDisabled = !isConfigured ? 'opacity-50 cursor-not-allowed' : '';
+            var infoText = isConfigured ? '🔄 Wird in Echtzeit synchronisiert' : '⚙️ Bitte Firebase konfigurieren';
+            var infoSubtext = isConfigured ? '<p class="text-xs text-gray-500 text-center mt-1">Änderungen werden sofort zwischen allen Geräten geteilt</p>' : '';
+            
+            var anleitungHtml = '';
+            if (!isConfigured) {
+                anleitungHtml = '<div class="bg-white rounded-2xl shadow-lg p-6 mt-4">' +
+                    '<h2 class="text-2xl font-bold text-gray-800 mb-4">📋 Firebase Einrichtung</h2>' +
+                    '<ol class="space-y-3 text-sm text-gray-700">' +
+                    '<li class="flex gap-2"><span class="font-bold">1.</span><span>Gehe zu <a href="https://console.firebase.google.com" target="_blank" class="text-indigo-600 underline">Firebase Console</a></span></li>' +
+                    '<li class="flex gap-2"><span class="font-bold">2.</span><span>Erstelle ein neues Projekt (z.B. "einkaufsliste")</span></li>' +
+                    '<li class="flex gap-2"><span class="font-bold">3.</span><span>Klicke auf "Web-App hinzufügen" (&lt;/&gt; Symbol)</span></li>' +
+                    '<li class="flex gap-2"><span class="font-bold">4.</span><span>Kopiere die Firebase-Konfiguration</span></li>' +
+                    '<li class="flex gap-2"><span class="font-bold">5.</span><span>Gehe zu "Realtime Database" → "Datenbank erstellen" → "Im Testmodus starten"</span></li>' +
+                    '<li class="flex gap-2"><span class="font-bold">6.</span><span>Ersetze die Konfiguration oben im Code (Zeile 21-28)</span></li>' +
+                    '<li class="flex gap-2"><span class="font-bold">7.</span><span>Lade die Datei auf GitHub Pages hoch</span></li>' +
+                    '</ol>' +
+                    '</div>';
+            }
+            
+            app.innerHTML = configWarning +
+                '<div class="max-w-2xl mx-auto p-4">' +
+                '<div class="bg-white rounded-2xl shadow-lg p-6 mb-4 fade-in">' +
+                '<div class="flex items-center justify-between mb-2">' +
+                '<h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">' +
+                '<svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>' +
+                '</svg>' +
+                'Einkaufsliste' +
+                '</h1>' +
+                '<div class="flex items-center gap-2">' +
+                '<div class="w-2 h-2 rounded-full ' + statusDot + '"></div>' +
+                '<span class="text-sm text-gray-600">' + statusText + '</span>' +
+                '</div>' +
+                '</div>' +
+                '<div class="flex gap-4 text-sm text-gray-600">' +
+                '<span>📝 Offen: ' + uncheckedCount + '</span>' +
+                '<span>✅ Erledigt: ' + checkedCount + '</span>' +
+                '</div>' +
+                '</div>' +
+                '<div class="bg-white rounded-2xl shadow-lg p-6 mb-4 fade-in">' +
+                '<div class="flex flex-col gap-3">' +
+                '<input type="text" id="newItemInput" placeholder="Artikel hinzufügen..." value="' + newItemName + '" class="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500 text-lg" />' +
+                '<div class="flex gap-2">' +
+                '<select id="categorySelect" class="flex-1 px-4 py-3 border-2 border-gray-200 rounded-lg focus:outline-none focus:border-indigo-500">' +
+                categoriesHtml +
+                '</select>' +
+                '<button onclick="addItem()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg hover:bg-indigo-700 transition-colors flex items-center gap-2 font-medium ' + buttonDisabled + '">' +
+                '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>' +
+                '</svg>' +
+                'Hinzufügen' +
+                '</button>' +
+                '</div>' +
+                '</div>' +
+                '</div>' +
+                '<div class="space-y-3 mb-4">' +
+                itemsListHtml +
+                '</div>' +
+                '<div class="bg-white rounded-2xl shadow-lg p-4">' +
+                '<p class="text-sm text-gray-600 text-center">' + infoText + '</p>' +
+                infoSubtext +
+                '</div>' +
+                anleitungHtml +
+                '</div>';
+
+            var input = document.getElementById('newItemInput');
+            var select = document.getElementById('categorySelect');
+            
+            if (input) {
+                input.addEventListener('input', function(e) {
+                    newItemName = e.target.value;
+                });
+                input.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        addItem();
+                    }
+                });
+            }
+            
+            if (select) {
+                select.addEventListener('change', function(e) {
+                    selectedCategory = e.target.value;
+                });
+            }
+        }
+
+        // Initial laden
+        if (isConfigured) {
+            initializeFirebaseListener();
+        } else {
+            render();
+        }
+    </script>
+</body>
+</html>
+
+
+
+
+
+
