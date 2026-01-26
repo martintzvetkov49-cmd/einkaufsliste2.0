@@ -32,11 +32,11 @@
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
-    <div id="app"></div>
-
-    <script>
-const firebaseConfig = {
+<script>
+        // ============================================
+        // FIREBASE KONFIGURATION - HIER ÄNDERN!
+        // ============================================
+        const firebaseConfig = {
             apiKey: "AIzaSyA-RmYmwYU7FbcQ0zpbkRUPzMYTghF73TQ",
             authDomain: "einkaufsliste-ff784.firebaseapp.com",
             databaseURL: "https://einkaufsliste-ff784-default-rtdb.europe-west1.firebasedatabase.app",
@@ -45,11 +45,10 @@ const firebaseConfig = {
             messagingSenderId: "616070619611",
             appId: "1:616070619611:web:91fd3bc488294fc48747fe"
         };
-// ============================================
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-        };
         // ============================================
+
+        // Firebase initialisieren
+        let database;
 
         // Firebase initialisieren
         let database;
@@ -326,6 +325,7 @@ const app = initializeApp(firebaseConfig);
     </script>
 </body>
 </html>
+
 
 
 
