@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemeinsame Einkaufsliste</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div id="app"></div>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyA-RmYmwYU7FbcQ0zpbkRUPzMYTghF73TQ",
+            authDomain: "einkaufsliste-ff784.firebaseapp.com",
+            databaseURL: "https://einkaufsliste-ff784-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "einkaufsliste-ff784",
+            storageBucket: "einkaufsliste-ff784.firebasestorage.app",
+            messagingSenderId: "616070619611",
+            appId: "1:616070619611:web:91fd3bc488294fc48747fe"
+        };
+        
+        let database, itemsRef, isConfigured = false;
+        try {
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            itemsRef = database.ref('shoppingItems');
+            isConfigured = true;
+        } catch (error) {
+            console.error("Firebase Fehler:", error);
+        }
+
+        const categories = ['Allgemein', 'Obst & Gemüse', 'Milchprodukte', 'Fleisch & Fisch', 'Backwaren', 'Getränke', 'Haushalt', 'Sonstiges'];
+        let items = [], newItemName = '', selectedCategory = 'Allgemein';
+
+        function initializeFirebaseListener() {
+            if (!isConfigured) return;
+            itemsRef.on('value', function(snapshot) {
+                var data = snapshot.val();
+                items = data ? Object.keys(data).map(function(key) { return data[key]; }) : [];
+                render();
+            });
+        }
+
+        function addItem() {
+            if (!isConfigured || !newItemName.trim()) return;
+            var newItemObj = {
+                id: Date.now(),
+                name: newItemName.trim(),
+                category: selectedCategory,
+                checked: false,
+                addedAt: new Date().toISOString()
+            };
+            itemsRef.child(newItemObj.id.toString()).set(newItemObj);
+            newItemName = '';
+            render();
+        }
+
+        function toggleItem(id) {
+            if (!isConfigured) return;
+            var item = items.find(function(i) { return i.id === id; });
+            if (item) itemsRef.child(id.toString()).update({ checked: !item.checked });
+        }
+
+        function deleteItem(id) {
+            if (!isConfigured) return;
+            itemsRef.child(id.toString()).remove();
+        }
+
+        function clearChecked() {
+            if (!isConfigured) return;
+            items.filter(function(item) { return item.checked; }).forEach(function(item) {
+                itemsRef.child(item.id.toString()).remove();
+            });
+        }
+
+        function groupItemsByCategory() {
+            var grouped = {};
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                if (!grouped[item.category]) grouped[item.category] = [];
+                grouped[item.category].push(item);
+            }
+            return grouped;
+        }
+
+        function render() {
+            var uncheckedCount = 0, checkedCount = 0;
+            for (var i = 0; i < items.length; i++) {
+                items[i].checked ? checkedCount++ : uncheckedCount++;
+            }
+            var groupedItems = groupItemsByCategory();
+            var app = document.getElementById('app');
+            
+            var categoriesHtml = '';
+            for (var i = 0; i < categories.length; i++) {
+                categoriesHtml += '<option value="' + categories[i] + '"' + (categories[i] === selectedCategory ? ' selected' : '') + '>' + categories[i] + '</option>';
+            }
+            
+            var itemsListHtml = '';
+            var categoryKeys = Object.keys(groupedItems);
+            
+            if (categoryKeys.length === 0) {
+                itemsListHtml = '<div class="bg-white rounded-2xl shadow-lg p-12 text-center"><p class="text-xl text-gray-400">Keine Artikel auf der Liste</p></div>';
+            } else {
+                for (var i = 0; i < categoryKeys.length; i++) {
+                    var cat = categoryKeys[i];
+                    var catItems = groupedItems[cat];
+                    itemsListHtml += '<div class="bg-white rounded-2xl shadow-lg p-4 mb-3"><h3 class="font-semibold text-lg text-gray-700 mb-3">' + cat + '</h3><div class="space-y-2">';
+                    for (var j = 0; j < catItems.length; j++) {
+                        var item = catItems[j];
+                        itemsListHtml += '<div class="flex items-center gap-3 p-3 rounded-lg ' + (item.checked ? 'bg-gray-50 opacity-60' : 'bg-indigo-50') + '">';
+                        itemsListHtml += '<button onclick="toggleItem(' + item.id + ')" class="w-7 h-7 rounded-full border-2 flex items-center justify-center ' + (item.checked ? 'bg-green-500 border-green-500' : 'border-gray-300') + '">';
+                        if (item.checked) itemsListHtml += '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>';
+                        itemsListHtml += '</button><span class="flex-1 text-lg ' + (item.checked ? 'line-through text-gray-400' : 'text-gray-800') + '">' + item.name + '</span>';
+                        itemsListHtml += '<button onclick="deleteItem(' + item.id + ')" class="text-red-500 p-2 rounded-lg">🗑️</button></div>';
+                    }
+                    itemsListHtml += '</div></div>';
+                }
+                if (checkedCount > 0) {
+                    itemsListHtml += '<button onclick="clearChecked()" class="w-full bg-red-500 text-white py-3 rounded-xl hover:bg-red-600 font-medium">Erledigte löschen (' + checkedCount + ')</button>';
+                }
+            }
+            
+            app.innerHTML = '<div class="max-w-2xl mx-auto p-4">' +
+                '<div class="bg-white rounded-2xl shadow-lg p-6 mb-4"><h1 class="text-3xl font-bold text-gray-800 mb-2">🛒 Einkaufsliste</h1>' +
+                '<div class="flex items-center gap-2 mb-4"><div class="w-2 h-2 rounded-full ' + (isConfigured ? 'bg-green-500' : 'bg-red-500') + '"></div>' +
+                '<span class="text-sm">' + (isConfigured ? 'Online' : 'Offline') + '</span></div>' +
+                '<div class="flex gap-4 text-sm"><span>📝 Offen: ' + uncheckedCount + '</span><span>✅ Erledigt: ' + checkedCount + '</span></div></div>' +
+                '<div class="bg-white rounded-2xl shadow-lg p-6 mb-4"><input type="text" id="newItemInput" placeholder="Artikel..." value="' + newItemName + '" class="w-full px-4 py-3 border-2 rounded-lg mb-3">' +
+                '<div class="flex gap-2"><select id="categorySelect" class="flex-1 px-4 py-3 border-2 rounded-lg">' + categoriesHtml + '</select>' +
+                '<button onclick="addItem()" class="bg-indigo-600 text-white px-6 py-3 rounded-lg font-medium">➕ Hinzufügen</button></div></div>' +
+                '<div class="space-y-3">' + itemsListHtml + '</div>' +
+                '<div class="bg-white rounded-2xl shadow-lg p-4 mt-4 text-center text-sm text-gray-600">🔄 Synchronisiert in Echtzeit</div></div>';
+
+            var input = document.getElementById('newItemInput');
+            if (input) {
+                input.addEventListener('input', function(e) { newItemName = e.target.value; });
+                input.addEventListener('keypress', function(e) { if (e.key === 'Enter') addItem(); });
+            }
+            var select = document.getElementById('categorySelect');
+            if (select) {
+                select.addEventListener('change', function(e) { selectedCategory = e.target.value; });
+            }
+        }
+
+        if (isConfigured) {
+            initializeFirebaseListener();
+        } else {
+            render();
+        }
+    </script>
+</body>
+</html>
