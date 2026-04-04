@@ -219,26 +219,26 @@
                         itemsListHtml += '<div class="flex items-center gap-3 px-3 py-2.5 rounded-xl ' +
                             (isChecked ? 'bg-gray-50' : 'bg-indigo-50') + ' slide-in">';
 
-                        // Checkbox button
-                        itemsListHtml += '<button onclick="toggleItem(' + item.id + ')" class="check-btn' + (isChecked ? ' done' : '') + '">';
-                        if (isChecked) {
-                            itemsListHtml += '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
-                                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>';
-                        }
-                        itemsListHtml += '</button>';
-
-                        // Item name
-                        itemsListHtml += '<span class="item-label flex-1 text-base ' +
-                            (isChecked ? 'line-through text-gray-400' : 'text-gray-800') + '">' +
-                            escapeHtml(item.name) + '</span>';
-
-                        // Delete button
+                        // Delete button (left)
                         itemsListHtml += '<button onclick="deleteItem(' + item.id + ')" ' +
                             'class="del-btn text-red-400 hover:text-red-600 p-1.5 rounded-lg" title="Löschen">' +
                             '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
                             '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" ' +
                             'd="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>' +
                             '</svg></button>';
+
+                        // Item name
+                        itemsListHtml += '<span class="item-label flex-1 text-base ' +
+                            (isChecked ? 'line-through text-gray-400' : 'text-gray-800') + '">' +
+                            escapeHtml(item.name) + '</span>';
+
+                        // Checkbox button (right)
+                        itemsListHtml += '<button onclick="toggleItem(' + item.id + ')" class="check-btn' + (isChecked ? ' done' : '') + '">';
+                        if (isChecked) {
+                            itemsListHtml += '<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
+                                '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>';
+                        }
+                        itemsListHtml += '</button>';
 
                         itemsListHtml += '</div>';
                     }
