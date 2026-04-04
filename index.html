@@ -305,7 +305,6 @@
 
             var input = document.getElementById('newItemInput');
             if (input) {
-                input.focus();
                 input.addEventListener('input', function(e) { newItemName = e.target.value; });
                 input.addEventListener('keypress', function(e) { if (e.key === 'Enter') addItem(); });
             }
