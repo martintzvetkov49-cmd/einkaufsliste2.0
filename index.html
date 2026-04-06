@@ -49,8 +49,8 @@
             border-color: #22c55e;
         }
         .check-btn:hover:not(.done) {
-            border-color: #6366f1;
-            background: #eef2ff;
+            border-color: #15803d;
+            background: #f0fdf4;
         }
 
         /* Delete button */
@@ -62,12 +62,12 @@
 
         input:focus, select:focus {
             outline: none;
-            border-color: #6366f1 !important;
-            box-shadow: 0 0 0 3px rgba(99,102,241,0.15);
+            border-color: #15803d !important;
+            box-shadow: 0 0 0 3px rgba(21,128,61,0.15);
         }
     </style>
 </head>
-<body class="bg-gradient-to-br from-slate-100 to-indigo-100 min-h-screen">
+<body class="bg-gradient-to-br from-slate-100 to-green-100 min-h-screen">
     <div id="app"></div>
     <script>
         const firebaseConfig = {
@@ -217,7 +217,7 @@
                         var item = catItems[j];
                         var isChecked = item.checked;
                         itemsListHtml += '<div class="flex items-center gap-3 px-3 py-2.5 rounded-xl ' +
-                            (isChecked ? 'bg-gray-50' : 'bg-indigo-50') + ' slide-in">';
+                            (isChecked ? 'bg-gray-50' : 'bg-green-50') + ' slide-in">';
 
                         // Delete button (left)
                         itemsListHtml += '<button onclick="deleteItem(' + item.id + ')" ' +
@@ -262,7 +262,7 @@
                     '<span>' + checkedCount + ' von ' + totalCount + ' erledigt</span>' +
                     '<span>' + progressPct + '%</span></div>' +
                     '<div class="w-full bg-gray-100 rounded-full h-2">' +
-                    '<div class="progress-bar-inner bg-gradient-to-r from-indigo-500 to-green-400 h-2 rounded-full" style="width:' + progressPct + '%"></div>' +
+                    '<div class="progress-bar-inner bg-gradient-to-r from-green-600 to-green-400 h-2 rounded-full" style="width:' + progressPct + '%"></div>' +
                     '</div></div>';
             }
 
@@ -278,7 +278,7 @@
                 '<div class="max-w-lg mx-auto px-4 py-6">' +
 
                 // Header
-                '<div class="bg-gradient-to-r from-indigo-600 to-violet-600 rounded-2xl shadow-lg p-6 mb-4 text-white">' +
+                '<div class="bg-gradient-to-r from-green-700 to-green-500 rounded-2xl shadow-lg p-6 mb-4 text-white">' +
                 '<div class="flex items-start justify-between">' +
                 '<div><h1 class="text-2xl font-bold mb-0.5">Einkaufsliste</h1>' +
                 statusDot + '</div>' +
@@ -294,7 +294,7 @@
                 '<div class="flex gap-2">' +
                 '<select id="categorySelect" class="flex-1 px-3 py-3 border-2 border-gray-100 rounded-xl text-gray-700 bg-white transition-all">' + categoriesHtml + '</select>' +
                 '<button onclick="addItem()" ' +
-                'class="bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white px-5 py-3 rounded-xl font-semibold transition-colors flex items-center gap-1.5">' +
+                'class="bg-green-700 hover:bg-green-800 active:bg-green-900 text-white px-5 py-3 rounded-xl font-semibold transition-colors flex items-center gap-1.5">' +
                 '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">' +
                 '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"></path></svg>' +
                 'Hinzufügen</button></div></div>' +
